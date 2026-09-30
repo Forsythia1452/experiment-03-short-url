@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>短链工坊</title>
+  <style>
+    :root{--ink:#172033;--muted:#667085;--line:#e4e7ec;--brand:#6558d3;--accent:#14b8a6;--bg:#f6f7fb;--danger:#b42318}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:radial-gradient(circle at 85% 5%,#e9e7ff 0,transparent 28%),var(--bg);font:15px/1.55 system-ui,"Microsoft YaHei",sans-serif}.shell{max-width:1120px;margin:auto;padding:38px 22px 70px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}.brand{font-size:21px;font-weight:800;letter-spacing:-.5px}.brand i{display:inline-block;width:13px;height:13px;border-radius:4px;background:var(--brand);margin-right:9px;transform:rotate(-12deg)}.badge{padding:6px 11px;border:1px solid #c7d7fe;border-radius:99px;color:#3448a2;background:#eef4ff;font-size:12px}.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:start}.intro{padding:32px 8px 0}.intro h1{font-size:48px;line-height:1.08;margin:0 0 18px;letter-spacing:-2px}.intro h1 span{color:var(--brand)}.intro p{color:var(--muted);font-size:17px;max-width:540px}.chips{display:flex;gap:9px;flex-wrap:wrap;margin-top:23px}.chips span{background:white;border:1px solid var(--line);padding:7px 11px;border-radius:10px;color:#475467;font-size:13px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 18px 45px rgba(38,46,73,.08)}label{display:block;font-weight:650;margin:15px 0 7px}input{width:100%;padding:12px 13px;border:1px solid #d0d5dd;border-radius:10px;font:inherit;outline:none}input:focus{border-color:var(--brand);box-shadow:0 0 0 3px #eeecff}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}button{border:0;border-radius:10px;padding:12px 18px;font:650 15px inherit;cursor:pointer}.primary{width:100%;margin-top:20px;background:var(--brand);color:white}.primary:hover{background:#5548c4}.message{min-height:24px;margin-top:13px;font-size:13px}.error{color:var(--danger)}.success{color:#067647}.result{display:none;background:#f4f3ff;border:1px solid #d9d6fe;border-radius:12px;padding:13px;margin-top:12px;word-break:break-all}.section-title{display:flex;justify-content:space-between;align-items:end;margin:55px 0 14px}.section-title h2{margin:0;font-size:25px}.section-title p{margin:0;color:var(--muted)}.table-card{background:white;border:1px solid var(--line);border-radius:18px;overflow:hidden}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:14px 16px;border-bottom:1px solid #edf0f5}th{color:var(--muted);font-size:12px;text-transform:uppercase;background:#fbfcfe}td{font-size:13px}.url{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.code{font-family:ui-monospace,monospace;color:var(--brand);font-weight:700}.count{display:inline-flex;min-width:34px;justify-content:center;background:#ecfdf3;color:#067647;padding:3px 8px;border-radius:99px}.empty{text-align:center;padding:42px;color:var(--muted)}a{color:var(--brand);text-decoration:none}.footer{margin-top:28px;color:#98a2b3;font-size:12px;text-align:center}@media(max-width:800px){.hero{grid-template-columns:1fr}.intro{padding-top:5px}.intro h1{font-size:38px}.row{grid-template-columns:1fr}.table-card{overflow:auto}.section-title{align-items:start;flex-direction:column}.url{max-width:220px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="top"><div class="brand"><i></i>短链工坊</div><div class="badge">Shlink · 安全代理</div></header>
+    <section class="hero">
+      <div class="intro">
+        <h1>让长网址，<br><span>轻一点。</span></h1>
+        <p>创建可追踪的短链接，设置专属短码与到期时间。管理密钥只保存在服务端，不会进入浏览器。</p>
+        <div class="chips"><span>HTTP/HTTPS 白名单</span><span>访问统计</span><span>过期控制</span><span>频率限制</span></div>
+      </div>
+      <form class="card" id="create-form">
+        <label for="long-url">目标网址</label>
+        <input id="long-url" type="url" maxlength="2048" required placeholder="https://example.com/article">
+        <div class="row">
+          <div><label for="alias">自定义短码</label><input id="alias" maxlength="30" pattern="[A-Za-z0-9_-]{4,30}" placeholder="my-link"></div>
+          <div><label for="expiry">有效期（可选）</label><input id="expiry" type="datetime-local"></div>
+        </div>
+        <button class="primary" type="submit">生成短链接</button>
+        <div class="message" id="message" aria-live="polite"></div>
+        <div class="result" id="result"></div>
+      </form>
+    </section>
+    <div class="section-title"><h2>链接列表</h2><p>真实 GET 会计入访问次数</p></div>
+    <section class="table-card"><div id="links"><div class="empty">正在加载…</div></div></section>
+    <div class="footer">实验 3 · 侯宇晴 · 软件2304 · 23120506154</div>
+  </main>
+  <script>
+    const form=document.querySelector('#create-form'),msg=document.querySelector('#message'),result=document.querySelector('#result'),links=document.querySelector('#links');
+    const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const fmt=s=>s?new Date(s).toLocaleString('zh-CN'):'永久';
+    async function api(url,opts){const r=await fetch(url,opts),b=await r.json();if(!r.ok)throw new Error(b.error||'请求失败');return b}
+    async function load(){try{const {data}=await api('/api/short-urls');if(!data.length){links.innerHTML='<div class="empty">还没有短链，先创建一条吧。</div>';return}links.innerHTML=`<table><thead><tr><th>短码</th><th>目标网址</th><th>创建 / 有效期</th><th>访问</th></tr></thead><tbody>${data.map(x=>`<tr><td><a class="code" href="${esc(x.shortUrl)}" target="_blank" rel="noopener">${esc(x.shortCode)}</a></td><td class="url" title="${esc(x.longUrl)}">${esc(x.longUrl)}</td><td>${fmt(x.dateCreated)}<br><small>${x.validUntil?'至 '+fmt(x.validUntil):'永久有效'}</small></td><td><span class="count">${Number(x.visitsCount)||0}</span></td></tr>`).join('')}</tbody></table>`}catch(e){links.innerHTML=`<div class="empty error">${esc(e.message)}</div>`}}
+    form.addEventListener('submit',async e=>{e.preventDefault();msg.className='message';msg.textContent='正在创建…';result.style.display='none';try{const expiry=document.querySelector('#expiry').value;const item=await api('/api/short-urls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({longUrl:document.querySelector('#long-url').value,customSlug:document.querySelector('#alias').value,validUntil:expiry?new Date(expiry).toISOString():null})});msg.className='message success';msg.textContent='创建成功';result.style.display='block';result.innerHTML=`<strong>${esc(item.shortCode)}</strong><br><a href="${esc(item.shortUrl)}" target="_blank" rel="noopener">${esc(item.shortUrl)}</a>`;form.reset();await load()}catch(e){msg.className='message error';msg.textContent=e.message}});load();setInterval(load,15000);
+  </script>
+</body>
+</html>
